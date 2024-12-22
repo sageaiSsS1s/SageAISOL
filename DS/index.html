@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sage AI</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <canvas id="techCanvas"></canvas>
+    
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="logo-section">
+                <img id="logoImage" src="./images/Sage.jpeg" alt="Sage Logo">
+                <h1>Sage AI</h1>
+            </div>
+            <div class="social-icons">
+                <a href="https://x.com/Sage_aiSoL" target="_blank" class="social-icon" onclick="window.open(this.href, '_blank'); return false;">
+                    <i class="fab fa-twitter"></i>
+                </a>
+                <a href="#" class="social-icon">
+                    <i class="fab fa-telegram"></i>
+                </a>
+            </div>
+        </div>
+        
+        <div class="chat-messages">
+            <div class="message bot-message">
+                Hello! I'm Sage AI. How can I assist you today? 😊
+            </div>
+        </div>
+        
+        <div class="chat-input">
+            <input type="text" placeholder="Type your message here...">
+            <button>Send</button>
+        </div>
+    </div>
+
+    <script>
+        // 获取画布和上下文
+        const canvas = document.getElementById('techCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 粒子数组和鼠标位置
+        let particles = [];
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+        let hue = 200;  // 起始色相值（蓝色）
+
+        // 粒子类
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.baseX = x;
+                this.baseY = y;
+                this.size = Math.random() * 2 + 1;
+                this.density = (Math.random() * 20) + 1;
+                this.color = `hsla(${hue}, 70%, 50%, 0.8)`;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+
+            update() {
+                let dx = mouseX - this.x;
+                let dy = mouseY - this.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                let forceDirectionX = dx / distance;
+                let forceDirectionY = dy / distance;
+                let maxDistance = 100;
+                let force = (maxDistance - distance) / maxDistance;
+                let directionX = forceDirectionX * force * this.density;
+                let directionY = forceDirectionY * force * this.density;
+
+                if (distance < maxDistance) {
+                    this.x += directionX;
+                    this.y += directionY;
+                    this.color = `hsla(${hue}, 70%, 50%, 0.8)`;
+                } else {
+                    if (this.x !== this.baseX) {
+                        let dx = this.x - this.baseX;
+                        this.x -= dx/10;
+                    }
+                    if (this.y !== this.baseY) {
+                        let dy = this.y - this.baseY;
+                        this.y -= dy/10;
+                    }
+                    this.color = `hsla(${hue}, 70%, 50%, 0.3)`;
+                }
+            }
+        }
+
+        // 初始化画布大小
+        function initCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        // 创建粒子
+        function createParticles() {
+            particles = [];
+            const numberOfParticles = Math.min(window.innerWidth, window.innerHeight) * 0.15;
+            for (let i = 0; i < numberOfParticles; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                particles.push(new Particle(x, y));
+            }
+        }
+
+        // 动画循环
+        function animate() {
+            ctx.fillStyle = 'rgba(26, 26, 46, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 绘制网格
+            ctx.strokeStyle = `hsla(${hue}, 70%, 50%, 0.1)`;
+            ctx.lineWidth = 0.5;
+            const gridSize = 30;
+
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            hue = (hue + 0.1) % 360;
+            requestAnimationFrame(animate);
+        }
+
+        // 事件监听
+        window.addEventListener('mousemove', (event) => {
+            mouseX = event.x;
+            mouseY = event.y;
+        });
+
+        window.addEventListener('resize', () => {
+            initCanvas();
+            createParticles();
+        });
+
+        // 初始化
+        initCanvas();
+        createParticles();
+        animate();
+    </script>
+
+    <script>
+        // 获取聊天相关的 DOM 元素
+        const chatMessages = document.querySelector('.chat-messages');
+        const inputField = document.querySelector('.chat-input input');
+        const sendButton = document.querySelector('.chat-input button');
+
+        // API 配置和系统设置
+        const API_CONFIG = {
+            apiKey: '98f6e851c24731ab7549a94863713daa.eBvoPRkNyVUBCGto',
+            baseUrl: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+            systemPrompt: {
+                zh: `You are Sage AI, an advanced artificial intelligence assistant.
+                    - Your name is Sage, representing wisdom and insight
+                    - Please respond in Chinese
+                    - Be professional, friendly, and insightful
+                    - Communicate with humility and openness
+                    - Use emojis when appropriate
+                    - Be honest about your limitations`,
+                en: `You are Sage AI, an advanced artificial intelligence assistant.
+                    - Your name is Sage, representing wisdom and insight
+                    - Your responses should be professional, friendly, and insightful
+                    - You should communicate with users in a humble and open manner
+                    - Use emojis when appropriate to make interactions more engaging
+                    - Be honest about your limitations when facing uncertain questions`
+            }
+        };
+
+        // 消息历史
+        let messageHistory = [];
+
+        // JWT token 生成函数
+        async function generateToken() {
+            try {
+                const [id, secret] = API_CONFIG.apiKey.split('.');
+                const now = Date.now();
+                
+                const header = {
+                    alg: 'HS256',
+                    sign_type: 'SIGN'
+                };
+                
+                const payload = {
+                    api_key: id,
+                    exp: now + 3600000,
+                    timestamp: now
+                };
+
+                return jwt_encode(payload, secret, { header });
+            } catch (error) {
+                console.error('Token generation failed:', error);
+                throw new Error('Authentication failed, please check API Key');
+            }
+        }
+
+        // 语言检测函数
+        function detectLanguage(text) {
+            const containsChinese = /[\u4e00-\u9fa5]/.test(text);
+            const isMainlyEnglish = /^[a-zA-Z\s\d.,!?'"-]+$/.test(text);
+            
+            if (containsChinese) return 'zh';
+            if (isMainlyEnglish) return 'en';
+            return 'en'; // Default to English
+        }
+
+        // 错误信息配置
+        const ERROR_MESSAGES = {
+            zh: {
+                apiError: 'API Request Failed: ',
+                authError: 'Authentication Failed: ',
+                networkError: 'Network Error: ',
+                unknownError: 'An unknown error occurred'
+            },
+            en: {
+                apiError: 'API Request Failed: ',
+                authError: 'Authentication Failed: ',
+                networkError: 'Network Error: ',
+                unknownError: 'An unknown error occurred'
+            }
+        };
+
+        // 加载提示文本
+        const LOADING_TEXT = {
+            zh: '🤔 Sage thinking...',
+            en: '🤔 Sage thinking...'
+        };
+
+        // 错误处理函数
+        function handleError(error, language = 'en') {
+            const messages = ERROR_MESSAGES[language];
+            if (error.message.includes('API')) {
+                return `${messages.apiError}${error.message}`;
+            } else if (error.message.includes('Auth')) {
+                return `${messages.authError}${error.message}`;
+            } else if (error.message.includes('Network')) {
+                return `${messages.networkError}${error.message}`;
+            }
+            return `${messages.unknownError}: ${error.message}`;
+        }
+
+        // API 调用函数
+        async function callAPI(message, useToken = true) {
+            try {
+                let headers = {
+                    'Content-Type': 'application/json'
+                };
+
+                if (useToken) {
+                    const token = await generateToken();
+                    headers['Authorization'] = `Bearer ${token}`;
+                } else {
+                    headers['Authorization'] = `Bearer ${API_CONFIG.apiKey}`;
+                }
+
+                const response = await fetch(API_CONFIG.baseUrl, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({
+                        model: 'glm-4',
+                        messages: messageHistory
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API request failed: ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('API call failed:', error);
+                throw error;
+            }
+        }
+
+        // 修改 callAI 函数
+        async function callAI(message) {
+            try {
+                const language = detectLanguage(message);
+                
+                // 如果是新对话，添加系统提示
+                if (messageHistory.length === 0) {
+                    messageHistory.push({
+                        role: 'system',
+                        content: API_CONFIG.systemPrompt[language]
+                    });
+                }
+
+                messageHistory.push({
+                    role: 'user',
+                    content: message
+                });
+
+                // 调用 API
+                try {
+                    const data = await callAPI(message, true);
+                    const aiResponse = data.choices[0].message.content;
+                    messageHistory.push({
+                        role: 'assistant',
+                        content: aiResponse
+                    });
+
+                    // 保持历史记录在合理范围内
+                    if (messageHistory.length > 10) {
+                        // 保留系统提示和最近的对话
+                        messageHistory = [
+                            messageHistory[0],
+                            ...messageHistory.slice(-9)
+                        ];
+                    }
+
+                    return aiResponse;
+                } catch (tokenError) {
+                    console.warn('Token auth failed, trying API Key:', tokenError);
+                    const data = await callAPI(message, false);
+                    const aiResponse = data.choices[0].message.content;
+                    messageHistory.push({
+                        role: 'assistant',
+                        content: aiResponse
+                    });
+                    return aiResponse;
+                }
+            } catch (error) {
+                console.error('AI API call failed:', error);
+                throw error;
+            }
+        }
+
+        // 显示加载消息
+        function showLoadingMessage(language = 'en') {
+            const dots = document.createElement('div');
+            dots.classList.add('message', 'bot-message', 'typing');
+            dots.textContent = LOADING_TEXT[language];
+            return dots;
+        }
+
+        // 添加消息到聊天框
+        function addMessage(message, isBot = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            messageDiv.classList.add(isBot ? 'bot-message' : 'user-message');
+            messageDiv.textContent = message;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // 处理发送消息
+        async function handleSendMessage() {
+            const message = inputField.value.trim();
+            if (message) {
+                try {
+                    inputField.disabled = true;
+                    sendButton.disabled = true;
+
+                    const language = detectLanguage(message);
+                    addMessage(message, false);
+                    inputField.value = '';
+
+                    const dots = showLoadingMessage(language);
+                    chatMessages.appendChild(dots);
+
+                    const response = await callAI(message);
+                    dots.remove();
+                    addMessage(response, true);
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    dots?.remove();
+                    addMessage(handleError(error, detectLanguage(message)), true);
+                } finally {
+                    inputField.disabled = false;
+                    sendButton.disabled = false;
+                    inputField.focus();
+                }
+            }
+        }
+
+        // 添加事件监听器
+        sendButton.addEventListener('click', handleSendMessage);
+        inputField.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+            }
+        });
+    </script>
+
+    <!-- 添加 JWT 编码库 -->
+    <script src="https://cdn.jsdelivr.net/npm/jwt-encode@1.0.1/dist/jwt-encode.min.js"></script>
+</body>
+</html> 
